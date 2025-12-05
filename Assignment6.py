@@ -15,12 +15,16 @@ Notes / references:
 """
 
 #Imports###########
-import os
+import os.getenv("MAYA_PROJECT")
 import argparse
 import maya.standalone
-maya.standalone.initialize()
+import sys
+import datetime
+from datetime import datetime
 import maya.cmds as cmds
+import json
 
+maya.standalone.initialize()
 #Argument Parsing##
 parser = argparse.ArgumentParser()
 parser.add_argument("--create", action="store_true", help="Create the sphere.")
@@ -37,9 +41,9 @@ SCENE = os.getenv("SCENE","defaultScene")
 WIN = "SphereColorWin"
 STATE = {"sphere": None}
 ASSET = os.getenv("ASSET","mySphereAsset")
-PROJECT_DIR = os.getenv("PROJECT_DIR") or getenv("MAYA_PROJECT")
+PROJECT_DIR = os.getenv("PROJECT_DIR") or os.getenv("MAYA_PROJECT")
 
-if not PROJECT DIR: 
+if not PROJECT_DIR: 
     sys.stderr.write(
         "[ERROR]PROJ_DIR or MAYA PROJECT is not currently in your environment .\n"
         "Make sure you run something like: \n"
@@ -59,10 +63,8 @@ filename = f"{ASSET}_sphere.mb"
 OUTPUT_PATH = os.path.join(EXPORT_DIR, filename)
     
 #Functions##
-STATE = {"sphere": None}   # keep track of the created sphere xform
-
-
-def ensure_shader(name, rgb):
+ 
+ def ensure_shader(name, rgb):
     """
     Create or reuse a lambert shader with the given RGB,
     and return its shading group.
@@ -149,6 +151,22 @@ try:
         cmds.file(save=True, type="mayaBinary")
         print(f"[OK] Saved sphere to: {OUTPUT_PATH}")
 
-finally:
+#------------------------------------------------------------
+# 5. Create python dictionary of stored data ###################
+#------------------------------------------------------------
+
+scene_metadata = {}
+scene_metadata["project"] = PROJECT
+scene_metadata["shot"] = SHOT
+scene_metadata["scene"] = SCENE
+scene_metadata["asset"] = ASSET
+scene_metadata["output_path"] = OUTPUT_PATH
+scene_metadata["updated_artist"]= os.getenv("USERNAME") or "unknown"
+scene_metadata["updated_time"]= str(datetime.now())
+print("[INFO] Scene metadata:", scene_metadata)
+with open("scene_metadata.json", "w") as f:
+    json.dump(scene_metadata, f, indent=4)
+print(f"[OK] Wrote scene metadata to {scene_metadata.json}")
+    finally:
     # Cleanly uninitialize Maya standalone when done.
     maya.standalone.uninitialize()
